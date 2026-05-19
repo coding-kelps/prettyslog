@@ -1,0 +1,78 @@
+# yaml-language-server: $schema=https://taskfile.dev/schema.json
+---
+version: '3'
+
+vars:
+  PKG_NAME: prettyslog
+  VERSION:
+    sh: echo ${VERSION:~unknown}
+  COMMIT_HASH:
+    sh: git rev-parse HEAD || echo "unknown"
+
+tasks:
+  default:
+    desc: Show help
+    cmds:
+      - task --list-all
+    silent: true
+
+  build:
+    desc: Build the binary locally
+    cmds:
+      - go build -trimpath -ldflags="-s -w" -o {{.APP_NAME}} ./cmd/samarkand
+
+  mod:
+    desc: Downloads and tidy Go modules
+    cmds:
+      - go mod download
+      - go mod tidy
+
+  clean:
+    desc: Cleans temp files and folders
+    aliases: [clear]
+    cmds:
+      - rm -rf dist/
+      - rm -rf tmp/
+
+  test:
+    desc: Run test suite
+    cmds:
+      - go test ./...
+
+  lint:
+    desc: Runs golangci-lint
+    aliases: [l]
+    sources:
+      - './**/*.go'
+      - .golangci.yml
+      - go.mod
+    cmds:
+      - golangci-lint run
+
+  lint:fix:
+    desc: Runs golangci-lint and fixes any issues
+    sources:
+      - './**/*.go'
+      - .golangci.yml
+      - go.mod
+    cmds:
+      - golangci-lint run --fix
+
+  format:
+    desc: Runs golangci-lint and formats any Go files
+    aliases: [fmt, f]
+    sources:
+      - './**/*.go'
+      - .golangci.yml
+    cmds:
+      - golangci-lint fmt
+
+  release:snapshot:
+    desc: Local snapshot build (no publish, no signing)
+    cmds:
+      - goreleaser release --snapshot --clean
+
+  release:
+    desc: Full release — requires GITHUB_TOKEN + COSIGN_* env vars
+    cmds:
+      - goreleaser release --clean

@@ -1,0 +1,85 @@
+[tool.commitizen]
+name = "cz_customize"
+
+[tool.commitizen.customize]
+message_template = """\
+{{ type }}{% if scope %}({{ scope }}){% endif %}{% if breaking_change %}!{% endif %}: {{ description }}
+
+{% if body %}\
+  {{ body }}
+
+{% endif %}\
+
+{% if reference %}\
+  {{ reference }}
+
+{% endif %}\
+
+{% if breaking_change %}\
+  BREAKING CHANGE: {{ breaking_change }}
+{% endif %}\
+"""
+schema = "<type>(\\(<scope>\\))?: <description>"
+schema_pattern = "^(feat|fix|docs|style|refactor|perf|test|build|ci|chore)(\\(.+\\))?:\\s.+$"
+example = """\
+feat!: update authentication method
+
+Changed auth middleware to handle JWT.
+
+Closes #46
+
+BREAKING CHANGE: The login endpoint now returns a JWT instead of a session token.\
+"""
+info = """\
+Custom commitzen commit rule based on conventional commits.
+
+# Based on
+- https://www.conventionalcommits.org/en/v1.0.0/#specification
+- https://gist.github.com/qoomon/5dfcdf8eec66a051ecd85625518cfd13
+
+# Source
+https://github.com/guilhem-sante/dotfiles/tree/main/dotfiles/dot_config/commitzen/cz.toml
+"""
+
+[[tool.commitizen.customize.questions]]
+type = "list"
+name = "type"
+message = "Select the type of change you are committing:"
+choices = [
+    { value = "feat", name = "feat:     A new feature" },
+    { value = "fix", name = "fix:      A bug fix" },
+    { value = "docs", name = "docs:     Documentation only changes" },
+    { value = "style", name = "style:    Changes that do not affect meaning of the code" },
+    { value = "refactor", name = "refactor: A code change that neither fixes a bug nor adds a feature" },
+    { value = "perf", name = "perf:     A code change that improves performance" },
+    { value = "test", name = "test:     Adding missing or correcting existing tests" },
+    { value = "build", name = "build:    Changes that affect the build system or external dependencies" },
+    { value = "ci", name = "ci:       Continuous integration configurations" },
+    { value = "chore", name = "chore:    Misc tasks (cleanup, tooling, etc.)" },
+]
+
+[[tool.commitizen.customize.questions]]
+type = "input"
+name = "scope"
+message = "Scope (optional):"
+
+[[tool.commitizen.customize.questions]]
+type = "input"
+name = "description"
+message = "Description:"
+
+[[tool.commitizen.customize.questions]]
+type = "input"
+name = "body"
+message = "Body (optional):"
+multiline = true
+
+[[tool.commitizen.customize.questions]]
+type = "input"
+name = "breaking_change"
+message = "Breaking changes (optional):"
+
+[[tool.commitizen.customize.questions]]
+type = "input"
+name = "reference"
+message = "Any reference? (optional):"

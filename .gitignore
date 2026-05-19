@@ -25,8 +25,18 @@ go.work
 go.work.sum
 
 # env file
-.env
+.env*
 
 # Editor/IDE
-# .idea/
-# .vscode/
+.idea/
+.vscode/
+
+# Build artifacts
+samarkand
+dist/
+build/
+bin/
+.task/
+
+# Debug file
+.debug*

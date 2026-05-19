@@ -1,0 +1,92 @@
+---
+name: Release
+
+on:
+  push:
+    tags:
+      - "v*"
+
+permissions:
+  contents: write
+  issues: read
+  pull-requests: read
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v6
+
+      - name: Set up Go
+        uses: actions/setup-go@v6.3.0
+        with:
+          go-version-file: go.mod
+          cache: true
+
+      - name: Verify module
+        run: go mod verify
+
+      - name: Run tests
+        run: go test ./...
+
+  generate-changelog:
+    name: Generate a changelog
+    needs:
+      - test
+    runs-on: ubuntu-latest
+    outputs:
+      release_body: ${{ steps.git-cliff.outputs.content }}
+    steps:
+      - uses: actions/checkout@v6
+        with:
+          fetch-depth: 0
+      - name: Generate a changelog
+        uses: orhun/git-cliff-action@v4
+        id: git-cliff
+        with:
+          config: cliff.toml
+          args: -vv --latest --strip header
+        env:
+          OUTPUT: CHANGES.md
+          GITHUB_REPO: ${{ github.repository }}
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+  generate-sbom:
+    name: Generate SBOMs (SPDX)
+    needs:
+      - test
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v6
+      - name: Generate SBOM (SPDX)
+        id: sbom
+        uses: anchore/sbom-action@v0
+        with:
+          artifact-name: prettyslog.sbom.spdx
+
+  release:
+    name: Make GitHub Release
+    runs-on: ubuntu-latest
+    needs:
+      - generate-changelog
+      - generate-sbom
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v6
+      - name: Download SBOM
+        uses: actions/download-artifact@v7
+        with:
+          name: prettyslog.sbom.spdx
+          path: .
+      - name: Upload release
+        uses: softprops/action-gh-release@v2
+        with:
+          token: ${{ secrets.GITHUB_TOKEN }}
+          name: ${{ github.ref_name }}
+          tag_name: ${{ github.ref_name }}
+          body: ${{ needs.generate-changelog.outputs.release_body }}
+          files: |
+            LICENSE
+            CHANGELOG.md
+            prettyslog.sbom.spdx
